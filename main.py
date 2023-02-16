@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-
+import math
 import customtkinter
 import time
 import threading
@@ -39,6 +39,72 @@ root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure((1, 0), weight=0)
 root.grid_columnconfigure((0, 1), weight=0)
 root.grid_columnconfigure((1, 1), weight=1)
+
+
+def validate_entry_text(new_text, id):
+    if not new_text:
+        return True
+    try:
+        float(new_text)
+        raceLength = raceLenghtEntry.get()
+        lapTimeMin = lapTimeMinEntry.get()
+        lapTimeSec = lapTimeSecEntry.get()
+        lapTimeMil = lapTimeMilEntry.get()
+        fuelCon = fuelEntry.get()
+
+        match id:
+            case "0":
+                raceLength = new_text
+            case "1":
+                lapTimeMin = new_text
+            case "2":
+                lapTimeSec = new_text
+            case "3":
+                lapTimeMil = new_text
+            case "4":
+                fuelCon = new_text
+
+        lapTimeInMin = 0
+        lapTimeSecToMin = [0]
+        lapTimeMilToMin = [0]
+        if raceLength == "" or raceLength == "0":
+            totalLaps = 0
+            totalLapsValue.configure(text=0)
+            minFuelValue.configure(text=0)
+            return True
+        if lapTimeMin == "" or lapTimeMin == "0":
+            totalLapsValue.configure(text=0)
+            minFuelValue.configure(text=0)
+            return True
+        if lapTimeSec == "":
+            lapTimeSec = 0
+        if lapTimeMil == "":
+            lapTimeMil = 0
+        if fuelCon == "" or fuelCon == "0":
+            totalLapsValue.configure(text=0)
+            minFuelValue.configure(text=0)
+            fuelCon = 0
+
+        lapTimeInMin = lapTimeMin
+        lapTimeSecToMin[0] = int(lapTimeSec) / 60
+        lapTimeMilToMin[0] = int(lapTimeMil)//60000
+
+        lapTimeInMin = int(lapTimeInMin)+lapTimeSecToMin[0]+lapTimeMilToMin[0]
+        totalLaps = math.ceil(int(raceLength)/lapTimeInMin)
+        totalLapsValue.configure(text=totalLaps)
+
+        print(totalLaps)
+        minFuel = math.ceil(int(totalLaps) * float(fuelCon))+1
+        minFuelValue.configure(text=minFuel)
+
+
+
+
+        return True
+    except ValueError:
+        return False
+
+validate_cmd = root.register(validate_entry_text)
 
 
 def loginUser(username, password, boolRemember):
@@ -101,7 +167,8 @@ fuelFrame = customtkinter.CTkFrame(master=teamFrame, corner_radius=0, fg_color="
 
 raceLengtText = customtkinter.CTkLabel(master=fuelFrame, corner_radius=0, text="Race length (in minutes)", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
 raceLengtText.pack()
-raceLenghtEntry = customtkinter.CTkEntry(master=fuelFrame, corner_radius=2, placeholder_text="Race length in minutes (e.g. 20)", fg_color="#232327", border_color="#232327", width=650, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+raceLenghtEntry = customtkinter.CTkEntry(master=fuelFrame, corner_radius=2, placeholder_text="Race length in minutes (e.g. 20)", fg_color="#232327", border_color="#232327", width=650, height=50, font=('Roboto', 18), justify="center", text_color="#E76D83", placeholder_text_color="#8ca3af")
+raceLenghtEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 0))
 raceLenghtEntry.pack(pady=10)
 
 lapTimeFrame = customtkinter.CTkFrame(master=fuelFrame, corner_radius=0, fg_color="#2d2f32")
@@ -109,10 +176,13 @@ lapTimeFrame.pack(pady=(20,0))
 lapTimeText = customtkinter.CTkLabel(master=lapTimeFrame, corner_radius=0, text="Lap time", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
 lapTimeText.grid(row=0, column=0, columnspan=3)
 lapTimeMinEntry = customtkinter.CTkEntry(master=lapTimeFrame, corner_radius=2, placeholder_text="Min", fg_color="#232327", border_color="#232327", width=210, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+lapTimeMinEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 1))
 lapTimeMinEntry.grid(row=1, column=0, padx=5, pady=(5, 0))
 lapTimeSecEntry = customtkinter.CTkEntry(master=lapTimeFrame, corner_radius=2, placeholder_text="Sec", fg_color="#232327", border_color="#232327", width=210, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+lapTimeSecEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 2))
 lapTimeSecEntry.grid(row=1, column=1, padx=5, pady=(5, 0))
 lapTimeMilEntry = customtkinter.CTkEntry(master=lapTimeFrame, corner_radius=2, placeholder_text="Ms", fg_color="#232327", border_color="#232327", width=210, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+lapTimeMilEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 3))
 lapTimeMilEntry.grid(row=1, column=2, padx=5, pady=(5, 0))
 lapTimeInfoText = customtkinter.CTkLabel(master=lapTimeFrame, corner_radius=0, text="Min. Sec : Ms - *You don't need to fill milliseconds.", font=('Roboto', 10, 'bold'), fg_color="#2d2f32", text_color="#E76D83")
 lapTimeInfoText.grid(row=3, column=0, columnspan=3)
@@ -120,13 +190,43 @@ lapTimeInfoText.grid(row=3, column=0, columnspan=3)
 fuelText = customtkinter.CTkLabel(master=fuelFrame, corner_radius=0, text="Fuel per lap", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
 fuelText.pack(pady=(20,0))
 fuelEntry = customtkinter.CTkEntry(master=fuelFrame, corner_radius=2, placeholder_text="Fuel consumption per lap (e.g. 3.7)", fg_color="#232327", border_color="#232327", width=650, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+fuelEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 4))
 fuelEntry.pack(pady=(5, 0))
 
 smallTipFrame = customtkinter.CTkFrame(master=fuelFrame, corner_radius=0, fg_color="#2d2f32")
 smallTipFrame.pack(pady=(20,0))
+
 totalLapsFrame = customtkinter.CTkFrame(master=smallTipFrame, corner_radius=0, fg_color="#2d2f32")
+totalLapsFrame.grid(row=0, column=0, padx=10)
+totalLapsText = customtkinter.CTkLabel(master=totalLapsFrame, corner_radius=0, text="Total Laps", font=('Roboto', 15), fg_color="#2d2f32", text_color="#9A9A9A")
+totalLapsText.pack()
+totalLapsValue = customtkinter.CTkLabel(master=totalLapsFrame, corner_radius=0, text="0", font=('Roboto', 15), fg_color="#2d2f32", text_color="#9A9A9A")
+totalLapsValue.pack(anchor="center")
+
+minFuelFrame = customtkinter.CTkFrame(master=smallTipFrame, corner_radius=0, fg_color="#2d2f32")
+minFuelFrame.grid(row=0, column=1, padx=10)
+mineFuelText = customtkinter.CTkLabel(master=minFuelFrame, corner_radius=0, text="Minimum Fuel", font=('Roboto', 15), fg_color="#2d2f32", text_color="#9A9A9A")
+mineFuelText.pack()
+minFuelValue = customtkinter.CTkLabel(master=minFuelFrame, corner_radius=0, text="0", font=('Roboto', 15), fg_color="#2d2f32", text_color="#9A9A9A")
+minFuelValue.pack(anchor="center")
+
+safeFuelFrame = customtkinter.CTkFrame(master=fuelFrame, corner_radius=2, fg_color="#161719")
+safeFuelFrame.pack(pady=(20,0))
+safeFuelText = customtkinter.CTkLabel(master=safeFuelFrame, corner_radius=0, text="Safe (Full formation lap)", font=('Roboto', 15), fg_color="#161719", text_color="#9A9A9A", width=630)
+safeFuelText.pack(pady=(10, 0))
+safeFuelValue = customtkinter.CTkLabel(master=safeFuelFrame, corner_radius=0, text="0", font=('Roboto', 15), fg_color="#161719", text_color="#9A9A9A")
+safeFuelValue.pack(pady=(0, 10))
+
+recommendedFuelFrame = customtkinter.CTkFrame(master=fuelFrame, corner_radius=2, fg_color="#0d0e0f")
+recommendedFuelFrame.pack()
+recommendedFuelText = customtkinter.CTkLabel(master=recommendedFuelFrame, corner_radius=0, text="Recommended", font=('Roboto', 20, 'bold'), fg_color="#0d0e0f", text_color="#E76D83", width=630)
+recommendedFuelText.pack(pady=(25, 0))
+recommendedFuelValue = customtkinter.CTkLabel(master=recommendedFuelFrame, corner_radius=0, text="0", font=('Roboto', 25, 'bold'), fg_color="#0d0e0f", text_color="#fff")
+recommendedFuelValue.pack(pady=(5, 25))
 
 fuelFrame.pack()
+
+
 
 panels[1] = teamFrame
 
@@ -185,6 +285,7 @@ def openInterval():
     intervalFrame.place(relx=.5, rely=.5, anchor="center")
     intervalValue = tkinter.StringVar(intervalFrame, getInterval())
     intervalEntry = customtkinter.CTkEntry(master=intervalFrame, font=('Roboto', 14), textvariable=intervalValue, height=30, width=30)
+    intervalEntry.configure(validate="key", validatecommand=(validate_cmd, "%P"))
     intervalEntry.grid(row=0, column=0)
     intervalLabel = customtkinter.CTkLabel(master=intervalFrame, font=('Roboto', 14), height=30, text="Set Interval (minutes)")
     intervalLabel.grid(row=0, column=1, padx=10)
