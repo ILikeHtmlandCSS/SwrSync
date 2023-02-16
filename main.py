@@ -1,19 +1,18 @@
 import json
-import tkinter
 import os
-import customtkinter
-import mysql
-import mysql.connector
-from _socket import if_nameindex
+import sys
 
+import customtkinter
+import time
+import threading
 import autoSync
-import login
 import mysqlHandler
 from login import checkLogin
 from login import checkSession
 import tkinter
 from pathlib import Path
 from PIL import Image
+import schedule
 
 
 customtkinter.set_appearance_mode("Dark")
@@ -24,6 +23,9 @@ carSettingsCfg.touch()
 
 setupSettingsCfg = Path("configs/setupSettings.json")
 setupSettingsCfg.touch()
+
+intervalCfg = Path("configs/intervalSettings.json")
+intervalCfg.touch()
 
 root = customtkinter.CTk(fg_color="#3a3e41")
 root.geometry("1280x720")
@@ -44,6 +46,7 @@ def loginUser(username, password, boolRemember):
         topBar.grid(row=0, column=0, columnspan=2, sticky="nsew")
         navBar.grid(row=1, column=0, sticky="nsw")
         content.grid(row=1, column=1, sticky="nsew")
+        getInterval()
         loadCars()
 
 
@@ -106,6 +109,31 @@ setupCheckmarks = {int(): customtkinter.CTkCheckBox(master=None)}
 loadedPanel = [customtkinter.CTkFrame(master=None)]
 
 
+def setInterval(interval, entry):
+    if not interval.isnumeric():
+        entry.configure(text="Use Numbers!")
+        return
+
+    with open("configs/intervalSettings.json", "r+") as file:
+        intSettings = []
+        intSettings.append(int(interval))
+        file.seek(0)
+        file.truncate(0)
+        json.dump(intSettings, file)
+
+    os.execl(sys.executable, os.path.abspath(__file__), *sys.argv)
+
+def getInterval():
+    with open("configs/intervalSettings.json", "r+") as file:
+        if os.path.getsize('configs/intervalSettings.json') == 0:
+            intSettings = []
+            intSettings.append(5)
+            json.dump(intSettings, file)
+            return 5
+
+        json_obj = json.load(file)
+        return json_obj[0]
+
 def loadPanel(panelId):
     if loadedPanel is not None:
         curPanel = loadedPanel[0]
@@ -114,14 +142,23 @@ def loadPanel(panelId):
     panel = panels[panelId]
     loadedPanel[0] = panel
     panel.pack(pady=10)
-    autoSync.sync()
 
 
 def openInterval():
     intervalWindow = customtkinter.CTkToplevel(fg_color="#3a3e41")
-    intervalWindow.geometry("512x512+384+104")
+    intervalWindow.geometry("300x300")
     intervalWindow.resizable(False, False)
-    intervalWindow.title("SWR-Sync")
+    intervalWindow.title("Set Interval")
+
+    intervalFrame = customtkinter.CTkFrame(master=intervalWindow, fg_color="#3a3e41")
+    intervalFrame.place(relx=.5, rely=.5, anchor="center")
+    intervalValue = tkinter.StringVar(intervalFrame, getInterval())
+    intervalEntry = customtkinter.CTkEntry(master=intervalFrame, font=('Roboto', 14), textvariable=intervalValue, height=30, width=30)
+    intervalEntry.grid(row=0, column=0)
+    intervalLabel = customtkinter.CTkLabel(master=intervalFrame, font=('Roboto', 14), height=30, text="Set Interval (minutes)")
+    intervalLabel.grid(row=0, column=1, padx=10)
+    intervalButton = customtkinter.CTkButton(master=intervalFrame, height=30, text="Save", command=lambda: setInterval(intervalEntry.get(), intervalButton))
+    intervalButton.grid(row=1, column=0, columnspan=2, pady=10)
 
 
 def loadCars():
@@ -194,8 +231,7 @@ def loadCars():
                                                       height=25, corner_radius=6, command=lambda: openInterval())
                 checkmark.grid(row=x + 1, column=1, columnspan=1, padx=20, pady=2, sticky="W")
                 setupCheckmarks.__setitem__(x, checkmark)
-                test = "sdsd"
-#sssdd
+
 
 def carCheckBoxClicked(checkboxId):
     checkbox = carBoxes[checkboxId]
@@ -222,6 +258,20 @@ if checkSession():
     topBar.grid(row=0, column=0, columnspan=2, sticky="nsew")
     navBar.grid(row=1, column=0, sticky="nsw")
     content.grid(row=1, column=1, sticky="nsew")
+    getInterval()
     loadCars()
-    test = "sdsd"
+
+
+def init_sync():
+    autoSync.sync()
+    schedule.every(getInterval()).minutes.do(autoSync.sync)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(0)
+
+sync_thread = threading.Thread(target=init_sync)
+sync_thread.setDaemon(True)
+sync_thread.start()
+
 root.mainloop()

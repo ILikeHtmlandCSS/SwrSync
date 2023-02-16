@@ -4,6 +4,7 @@ import mysqlHandler
 import json
 from multiprocessing.pool import ThreadPool as Pool
 
+syncSetup = [bool]
 cars = []
 setupTypes = []
 
@@ -30,6 +31,11 @@ def downloadSetups(xCars, yResult):
 
 
 pool = Pool(300)
+task = []
+
+
+def stop():
+    task[0].cancel()
 
 
 def sync():
@@ -43,13 +49,17 @@ def sync():
         json_obj = json.load(file)
         setupTypes.append(0)
         for x in json_obj:
-            if x == "3" or x == "4" or x == "5":
+            if x == "4" or x == "5":
+                break
+            if x == "3":
+                if json_obj[x] == 0:
+                    syncSetup[0] = False
                 break
             if json_obj[x] == 1:
                 setupTypes.append(int(x) + 1)
 
-        print(setupTypes)
-
+    if not syncSetup[0]:
+        return
     with open("configs/carSettings.json", "r") as file:
         json_obj = json.load(file)
         for x in json_obj:
