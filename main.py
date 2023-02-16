@@ -31,6 +31,7 @@ root = customtkinter.CTk(fg_color="#3a3e41")
 root.geometry("1280x720")
 root.resizable(False, False)
 root.title("SWR-Sync")
+root.wm_iconbitmap("images/SWR.ico")
 
 root.grid_rowconfigure(0, weight=0)
 root.grid_rowconfigure(1, weight=1)
@@ -94,10 +95,40 @@ syncFrame = customtkinter.CTkFrame(master=content, corner_radius=0, fg_color="#2
 syncFrame.grid_columnconfigure((0, 0), weight=1)
 panels[0] = syncFrame
 
-testFrame = customtkinter.CTkFrame(master=content, corner_radius=0)
-testText = customtkinter.CTkEntry(master=testFrame)
-testText.pack()
-panels[1] = testFrame
+teamFrame = customtkinter.CTkFrame(master=content, corner_radius=0, fg_color="#2d2f32")
+
+fuelFrame = customtkinter.CTkFrame(master=teamFrame, corner_radius=0, fg_color="#2d2f32")
+
+raceLengtText = customtkinter.CTkLabel(master=fuelFrame, corner_radius=0, text="Race length (in minutes)", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
+raceLengtText.pack()
+raceLenghtEntry = customtkinter.CTkEntry(master=fuelFrame, corner_radius=2, placeholder_text="Race length in minutes (e.g. 20)", fg_color="#232327", border_color="#232327", width=650, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+raceLenghtEntry.pack(pady=10)
+
+lapTimeFrame = customtkinter.CTkFrame(master=fuelFrame, corner_radius=0, fg_color="#2d2f32")
+lapTimeFrame.pack(pady=(20,0))
+lapTimeText = customtkinter.CTkLabel(master=lapTimeFrame, corner_radius=0, text="Lap time", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
+lapTimeText.grid(row=0, column=0, columnspan=3)
+lapTimeMinEntry = customtkinter.CTkEntry(master=lapTimeFrame, corner_radius=2, placeholder_text="Min", fg_color="#232327", border_color="#232327", width=210, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+lapTimeMinEntry.grid(row=1, column=0, padx=5, pady=(5, 0))
+lapTimeSecEntry = customtkinter.CTkEntry(master=lapTimeFrame, corner_radius=2, placeholder_text="Sec", fg_color="#232327", border_color="#232327", width=210, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+lapTimeSecEntry.grid(row=1, column=1, padx=5, pady=(5, 0))
+lapTimeMilEntry = customtkinter.CTkEntry(master=lapTimeFrame, corner_radius=2, placeholder_text="Ms", fg_color="#232327", border_color="#232327", width=210, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+lapTimeMilEntry.grid(row=1, column=2, padx=5, pady=(5, 0))
+lapTimeInfoText = customtkinter.CTkLabel(master=lapTimeFrame, corner_radius=0, text="Min. Sec : Ms - *You don't need to fill milliseconds.", font=('Roboto', 10, 'bold'), fg_color="#2d2f32", text_color="#E76D83")
+lapTimeInfoText.grid(row=3, column=0, columnspan=3)
+
+fuelText = customtkinter.CTkLabel(master=fuelFrame, corner_radius=0, text="Fuel per lap", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
+fuelText.pack(pady=(20,0))
+fuelEntry = customtkinter.CTkEntry(master=fuelFrame, corner_radius=2, placeholder_text="Fuel consumption per lap (e.g. 3.7)", fg_color="#232327", border_color="#232327", width=650, height=50, font=('Roboto', 18), justify="center", placeholder_text_color="#8ca3af", text_color="#E76D83")
+fuelEntry.pack(pady=(5, 0))
+
+smallTipFrame = customtkinter.CTkFrame(master=fuelFrame, corner_radius=0, fg_color="#2d2f32")
+smallTipFrame.pack(pady=(20,0))
+totalLapsFrame = customtkinter.CTkFrame(master=smallTipFrame, corner_radius=0, fg_color="#2d2f32")
+
+fuelFrame.pack()
+
+panels[1] = teamFrame
 
 carBox = customtkinter.CTkFrame(master=syncFrame, corner_radius=0, fg_color="#2d2f32")
 carBox.grid_columnconfigure((0, 0), weight=1)

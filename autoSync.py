@@ -13,9 +13,6 @@ def downloadSetups(xCars, yResult):
     if setupTypes.count(yResult[2]):
         setupDict = str(yResult[0])
 
-        print(yResult[0])
-        print()
-
         if not os.path.exists(os.path.expanduser("~") + "/Documents/Test/Setups/" + xCars[0] + "/" + yResult[3]):
             os.makedirs(os.path.expanduser("~") + "/Documents/Test/Setups/" + xCars[0] + "/" + yResult[3])
 
@@ -44,7 +41,7 @@ def sync():
     allCars = cursor.fetchall()
     cars.clear()
     setupTypes.clear()
-
+    print("Syncing...")
     with open("configs/setupSettings.json", "r") as file:
         json_obj = json.load(file)
         setupTypes.append(0)
