@@ -41,6 +41,16 @@ root.grid_columnconfigure((0, 1), weight=0)
 root.grid_columnconfigure((1, 1), weight=1)
 
 
+def loadPanel(panelId):
+    if loadedPanel is not None:
+        curPanel = loadedPanel[0]
+        loadedPanel[0] = None
+        curPanel.pack_forget()
+    panel = panels[panelId]
+    loadedPanel[0] = panel
+    panel.pack(pady=10)
+
+
 def validate_entry_text(new_text, id):
     if not new_text:
         return True
@@ -94,8 +104,12 @@ def validate_entry_text(new_text, id):
         totalLapsValue.configure(text=totalLaps)
 
         print(totalLaps)
-        minFuel = math.ceil(int(totalLaps) * float(fuelCon))+1
+        minFuel = math.ceil((int(totalLaps) * float(fuelCon))+1)
         minFuelValue.configure(text=minFuel)
+        safeFuel = math.ceil(minFuel+(2*float(fuelCon)))
+        safeFuelValue.configure(text=safeFuel)
+        recommendedFuel = math.ceil((int(minFuel)+(int(minFuel)+1+float(fuelCon)))/2)
+        recommendedFuelValue.configure(text=recommendedFuel)
 
 
 
@@ -115,6 +129,7 @@ def loginUser(username, password, boolRemember):
         content.grid(row=1, column=1, sticky="nsew")
         getInterval()
         loadCars()
+        loadPanel(0)
 
 
 loginFrame = customtkinter.CTkFrame(master=root, corner_radius=0)
@@ -141,17 +156,22 @@ checkbox.pack(pady=(22.5, 22.5))
 
 topBar = customtkinter.CTkFrame(master=root, corner_radius=0, fg_color="#292c2e", height=70)
 
+
+
 # navbar
 navBar = customtkinter.CTkFrame(master=root, corner_radius=0, fg_color="#3a3e41", width=330)
 
 syncPanelBtn = customtkinter.CTkButton(master=navBar, width=300, text="Synchronisierung", image=customtkinter.CTkImage(light_image=Image.open("images/rotate-solid.png"), size=(22, 22)), fg_color="#3a3e41", font=('Roboto', 18, 'bold'), corner_radius=0, text_color="#d3bbb0", hover_color="#26292b", anchor="w", border_spacing=10, command=lambda: loadPanel(0))
 syncPanelBtn.pack(pady=(10, 0))
 
-teamPanelBtn = customtkinter.CTkButton(master=navBar, width=300, text="Team Panel", image=customtkinter.CTkImage(light_image=Image.open("images/user-group-solid.png"), size=(26, 22)), fg_color="#3a3e41", font=('Roboto', 18, 'bold'), corner_radius=0, text_color="#d3bbb0", hover_color="#26292b", anchor="w", border_spacing=10, command=lambda: loadPanel(1))
-teamPanelBtn.pack(pady=(10, 0))
+fuelCalcBtn = customtkinter.CTkButton(master=navBar, width=300, text="Sprit-Rechner", image=customtkinter.CTkImage(light_image=Image.open("images/gas-pump-solid.png"), size=(22, 22)), fg_color="#3a3e41", font=('Roboto', 18, 'bold'), corner_radius=0, text_color="#d3bbb0", hover_color="#26292b", anchor="w", border_spacing=10, command=lambda: loadPanel(1))
+fuelCalcBtn.pack(pady=(10, 0))
 
-uploadPanelBtn = customtkinter.CTkButton(master=navBar, width=300, text="Livery Upload", image=customtkinter.CTkImage(light_image=Image.open("images/upload-solid.png"), size=(22, 22)), fg_color="#3a3e41", font=('Roboto', 18, 'bold'), corner_radius=0, text_color="#d3bbb0", hover_color="#26292b", anchor="w", border_spacing=10)
-uploadPanelBtn.pack(pady=(10, 0))
+stintPtn = customtkinter.CTkButton(master=navBar, width=300, text="Stints", image=customtkinter.CTkImage(light_image=Image.open("images/list-solid.png"), size=(22, 22)), fg_color="#3a3e41", font=('Roboto', 18, 'bold'), corner_radius=0, text_color="#d3bbb0", hover_color="#26292b", anchor="w", border_spacing=10, command=lambda: loadPanel(2))
+stintPtn.pack(pady=(10, 0))
+
+#uploadPanelBtn = customtkinter.CTkButton(master=navBar, width=300, text="Livery Upload", image=customtkinter.CTkImage(light_image=Image.open("images/upload-solid.png"), size=(22, 22)), fg_color="#3a3e41", font=('Roboto', 18, 'bold'), corner_radius=0, text_color="#d3bbb0", hover_color="#26292b", anchor="w", border_spacing=10)
+#uploadPanelBtn.pack(pady=(10, 0))
 
 content = customtkinter.CTkFrame(master=root, corner_radius=0, fg_color="#2d2f32")
 
@@ -265,15 +285,6 @@ def getInterval():
         json_obj = json.load(file)
         return json_obj[0]
 
-def loadPanel(panelId):
-    if loadedPanel is not None:
-        curPanel = loadedPanel[0]
-        loadedPanel[0] = None
-        curPanel.pack_forget()
-    panel = panels[panelId]
-    loadedPanel[0] = panel
-    panel.pack(pady=10)
-
 
 def openInterval():
     intervalWindow = customtkinter.CTkToplevel(fg_color="#3a3e41")
@@ -302,7 +313,7 @@ def loadCars():
         if os.path.getsize('configs/carSettings.json') == 0:
             carDict = {}
             for x in range(len(cars)):
-                carDict[str(x)] = 1
+                carDict[str(x)] = 0
             print(carDict)
             json.dump(carDict, file)
 
@@ -310,7 +321,7 @@ def loadCars():
         if os.path.getsize('configs/setupSettings.json') == 0:
             setupDict = {}
             for x in range(6):
-                setupDict[str(x)] = 1
+                setupDict[str(x)] = 0
             print(setupDict)
             json.dump(setupDict, file)
 
@@ -351,17 +362,10 @@ def loadCars():
                                                       variable=checkmarkValue)
                 checkmark.grid(row=x+1, column=1, columnspan=1, padx=20, pady=2)
                 setupCheckmarks.__setitem__(x, checkmark)
-            elif x == 4:
-                checkmark = customtkinter.CTkCheckBox(master=carBox, text="Sync Liveries", font=('Roboto', 16), width=500,
-                                                      checkbox_height=25, checkbox_width=25, corner_radius=6,
-                                                      command=lambda x=x: setupCheckboxClicked(x),
-                                                      variable=checkmarkValue)
-                checkmark.grid(row=x + 1, column=1, columnspan=1, padx=20, pady=2)
-                setupCheckmarks.__setitem__(x, checkmark)
             elif x == 5:
                 checkmark = customtkinter.CTkButton(master=carBox, text="Interval", font=('Roboto', 16), width=150,
                                                       height=25, corner_radius=6, command=lambda: openInterval())
-                checkmark.grid(row=x + 1, column=1, columnspan=1, padx=20, pady=2, sticky="W")
+                checkmark.grid(row=x, column=1, columnspan=1, padx=20, pady=2, sticky="W")
                 setupCheckmarks.__setitem__(x, checkmark)
 
 
@@ -392,6 +396,7 @@ if checkSession():
     content.grid(row=1, column=1, sticky="nsew")
     getInterval()
     loadCars()
+    loadPanel(0)
 
 
 def init_sync():

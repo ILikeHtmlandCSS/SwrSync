@@ -1,2 +1,5 @@
+/configs/intervalSettings.json,
+/configs/carSettings.json,
+/configs/setupSettings.json,
+/configs/cache.json
 /configs/
-/.idea/
