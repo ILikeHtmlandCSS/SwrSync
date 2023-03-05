@@ -21,6 +21,11 @@ def getConnection():
         return "There is no valid MySql connection!"
 
 
+def getConn():
+    if conn[0].is_connected():
+        return conn[0]
+
+
 def getCursor():
     if conn[0].is_connected():
         return conn[0].cursor()

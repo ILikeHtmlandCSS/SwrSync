@@ -2,11 +2,20 @@ import json
 import os
 import sys
 import math
+import webbrowser
+from selenium import webdriver
 import customtkinter
 import time
 import threading
+
+import requests
+
 import autoSync
+import urllib
+
+import login
 import mysqlHandler
+import stint
 from login import checkLogin
 from login import checkSession
 import tkinter
@@ -46,8 +55,12 @@ def loadPanel(panelId):
         curPanel = loadedPanel[0]
         loadedPanel[0] = None
         curPanel.pack_forget()
+        curPanel.place_forget()
     panel = panels[panelId]
     loadedPanel[0] = panel
+    if panelId == 2:
+        panel.place(rely=.5, relx=.5, anchor="c")
+        return
     panel.pack(pady=10)
 
 
@@ -155,8 +168,9 @@ checkbox = customtkinter.CTkCheckBox(master=loginFrame, text="Remember me", font
 checkbox.pack(pady=(22.5, 22.5))
 
 topBar = customtkinter.CTkFrame(master=root, corner_radius=0, fg_color="#292c2e", height=70)
-
-
+topBarLogo = customtkinter.CTkButton(master=topBar, corner_radius=0, text="SWR", font=('Roboto', 35, 'bold'), image=customtkinter.CTkImage(light_image=Image.open("images/SWR.png"), size=(45,45)), fg_color="#292c2e", height=70, width=300, hover_color="#292c2e", text_color="#D5BBB1", cursor="hand2",
+                                     command= lambda: webbrowser.open('https://scheibenwischer.racing/login/2-check.php?user='+login.getUsername()+"&password="+login.getPassword()))
+topBarLogo.grid(row=0, column=0)
 
 # navbar
 navBar = customtkinter.CTkFrame(master=root, corner_radius=0, fg_color="#3a3e41", width=330)
@@ -182,7 +196,7 @@ syncFrame.grid_columnconfigure((0, 0), weight=1)
 panels[0] = syncFrame
 
 teamFrame = customtkinter.CTkFrame(master=content, corner_radius=0, fg_color="#2d2f32")
-
+panels[1] = teamFrame
 fuelFrame = customtkinter.CTkFrame(master=teamFrame, corner_radius=0, fg_color="#2d2f32")
 
 raceLengtText = customtkinter.CTkLabel(master=fuelFrame, corner_radius=0, text="Race length (in minutes)", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
@@ -247,8 +261,73 @@ recommendedFuelValue.pack(pady=(5, 25))
 fuelFrame.pack()
 
 
+stintFrame = customtkinter.CTkFrame(master=content, corner_radius=2, fg_color="#2d2f32")
+panels[2] = stintFrame
 
-panels[1] = teamFrame
+stintEntryFrame = customtkinter.CTkFrame(master=stintFrame, corner_radius=2, fg_color="#2d2f32")
+stintEntryFrame.grid(row=0, column=0)
+
+stintRaceLengtText = customtkinter.CTkLabel(master=stintEntryFrame, corner_radius=0, text="Rennzeit (in Minuten)", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
+stintRaceLengtText.pack()
+stintRaceLenghtEntry = customtkinter.CTkEntry(master=stintEntryFrame, corner_radius=2, placeholder_text="Rennlänge in Minuten", fg_color="#232327", border_color="#232327", width=300, height=50, font=('Roboto', 18), justify="center", text_color="#E76D83", placeholder_text_color="#8ca3af")
+stintRaceLenghtEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 0))
+stintRaceLenghtEntry.pack(pady=5)
+
+stintLengtText = customtkinter.CTkLabel(master=stintEntryFrame, corner_radius=0, text="Stintlänge (in Minuten)", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
+stintLengtText.pack(pady = (15,0))
+stintLenghtEntry = customtkinter.CTkEntry(master=stintEntryFrame, corner_radius=2, placeholder_text="Stintlänge in Minuten", fg_color="#232327", border_color="#232327", width=300, height=50, font=('Roboto', 18), justify="center", text_color="#E76D83", placeholder_text_color="#8ca3af")
+stintLenghtEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 0))
+stintLenghtEntry.pack(pady=5)
+
+stintStartTimeFrame = customtkinter.CTkFrame(master=stintEntryFrame, corner_radius=2, fg_color="#2d2f32")
+stintStartTimeText = customtkinter.CTkLabel(master=stintStartTimeFrame, corner_radius=0, text="Uhrzeit des Rennstarts", font=('Roboto', 20), fg_color="#2d2f32", text_color="#d5bba4")
+stintStartTimeText.grid(row=0, column=0, columnspan=2)
+stintStartTimeHEntry = customtkinter.CTkEntry(master=stintStartTimeFrame, corner_radius=2, placeholder_text="Startzeit Stunde", fg_color="#232327", border_color="#232327", width=146, height=50, font=('Roboto', 17), justify="center", text_color="#E76D83", placeholder_text_color="#8ca3af")
+stintStartTimeHEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 0))
+stintStartTimeHEntry.grid(row=1, column=0, padx=3, pady=5)
+stintStartTimeMEntry = customtkinter.CTkEntry(master=stintStartTimeFrame, corner_radius=2, placeholder_text="Startzeit Minute", fg_color="#232327", border_color="#232327", width=146, height=50, font=('Roboto', 17), justify="center", text_color="#E76D83", placeholder_text_color="#8ca3af")
+stintStartTimeMEntry.configure(validate="key", validatecommand=(validate_cmd, "%P", 0))
+stintStartTimeMEntry.grid(row=1, column=1, padx=3, pady=5)
+stintStartTimeFrame.pack(pady = (15,0))
+
+stintApplyButton = customtkinter.CTkButton(master=stintEntryFrame, corner_radius=2, text="Update Stinttable", font=('Roboto', 18), text_color="#E76D83", fg_color="#232327", hover_color="#26292B", border_spacing=10, width=300)
+stintApplyButton.pack()
+
+stintListFrame = customtkinter.CTkFrame(master=stintFrame, corner_radius=2, fg_color="#2d2f32")
+stintListFrame.grid(row=0, column=1)
+
+stintListTimeText = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="Uhrzeit", font=('Roboto', 20), fg_color="#2d2f32", text_color="#E76D83", width=150)
+stintListTimeText.grid(row=0, column=0)
+stintListDriverText = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="Driver", font=('Roboto', 20), fg_color="#2d2f32", text_color="#E76D83", width=150)
+stintListDriverText.grid(row=0, column=1)
+
+stintListTime1 = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="14:00-15:00", font=('Roboto', 15), fg_color="#2d2f32", text_color="#D5BBB1", width=150)
+stintListTime1.grid(row=1, column=0)
+stintListTime2 = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="15:00-16:00", font=('Roboto', 15), fg_color="#2d2f32", text_color="#D5BBB1", width=150)
+stintListTime2.grid(row=2, column=0)
+stintListTime3 = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="16:00-17:00", font=('Roboto', 15), fg_color="#2d2f32", text_color="#D5BBB1", width=150)
+stintListTime3.grid(row=3, column=0)
+stintListTime4 = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="17:00-18:00", font=('Roboto', 15), fg_color="#2d2f32", text_color="#D5BBB1", width=150)
+stintListTime4.grid(row=4, column=0)
+stintListTime5 = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="18:00-19:00", font=('Roboto', 15), fg_color="#2d2f32", text_color="#D5BBB1", width=150)
+stintListTime5.grid(row=5, column=0)
+stintListTime6 = customtkinter.CTkLabel(master=stintListFrame, corner_radius=0, text="19:00-20:00", font=('Roboto', 15), fg_color="#2d2f32", text_color="#D5BBB1", width=150)
+stintListTime6.grid(row=6, column=0)
+
+
+stintListOption1 = customtkinter.CTkOptionMenu(master=stintListFrame, values=["Luca Stübing", "Noah Schneider", "Tim Streuselberg"])
+stintListOption1.grid(row=1, column=1, pady=5)
+stintListOption2 = customtkinter.CTkOptionMenu(master=stintListFrame, values=["Luca Stübing", "Noah Schneider", "Tim Streuselberg"])
+stintListOption2.grid(row=2, column=1, pady=5)
+stintListOption3 = customtkinter.CTkOptionMenu(master=stintListFrame, values=["Luca Stübing", "Noah Schneider", "Tim Streuselberg"])
+stintListOption3.grid(row=3, column=1, pady=5)
+stintListOption4 = customtkinter.CTkOptionMenu(master=stintListFrame, values=["Luca Stübing", "Noah Schneider", "Tim Streuselberg"])
+stintListOption4.grid(row=4, column=1, pady=5)
+stintListOption5 = customtkinter.CTkOptionMenu(master=stintListFrame, values=["Luca Stübing", "Noah Schneider", "Tim Streuselberg"])
+stintListOption5.grid(row=5, column=1, pady=5)
+stintListOption6 = customtkinter.CTkOptionMenu(master=stintListFrame, values=["Luca Stübing", "Noah Schneider", "Tim Streuselberg"])
+stintListOption6.grid(row=6, column=1, pady=5)
+
 
 carBox = customtkinter.CTkFrame(master=syncFrame, corner_radius=0, fg_color="#2d2f32")
 carBox.grid_columnconfigure((0, 0), weight=1)
@@ -408,7 +487,9 @@ def init_sync():
         time.sleep(0)
 
 sync_thread = threading.Thread(target=init_sync)
-sync_thread.setDaemon(True)
+sync_thread.daemon = True
 sync_thread.start()
+
+stint.teamHasStint(login.getUsername())
 
 root.mainloop()
